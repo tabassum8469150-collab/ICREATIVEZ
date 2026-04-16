@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>JSON Validator & Formatter | Tabassum Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0b2b3b 0%, #0a1c28 100%);
+            font-family: 'Inter', system-ui, 'Segoe UI', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* main card */
+        .validator-container {
+            max-width: 1400px;
+            width: 100%;
+            background: rgba(22, 34, 48, 0.75);
+            backdrop-filter: blur(2px);
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(66, 153, 225, 0.2);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* header area */
+        .tool-header {
+            padding: 1.5rem 2rem;
+            background: rgba(15, 25, 35, 0.8);
+            border-bottom: 1px solid rgba(72, 187, 255, 0.3);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .title-badge h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #D9EAF7, #7BC5FF);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .title-badge p {
+            font-size: 0.85rem;
+            color: #9bb7d4;
+            margin-top: 0.3rem;
+        }
+
+        .status-panel {
+            background: #07141ecc;
+            border-radius: 2rem;
+            padding: 0.4rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .status-led {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #6b7280;
+            box-shadow: 0 0 4px currentColor;
+            transition: all 0.2s;
+        }
+
+        .status-led.valid {
+            background: #10b981;
+            box-shadow: 0 0 8px #2dd4bf;
+        }
+
+        .status-led.invalid {
+            background: #ef4444;
+            box-shadow: 0 0 8px #f87171;
+        }
+
+        .status-text {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+        }
+
+        /* action bar */
+        .action-bar {
+            padding: 1rem 2rem;
+            background: #0e1a24;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            border-bottom: 1px solid #1e2f3c;
+        }
+
+        button {
+            background: #1e2f3c;
+            border: none;
+            padding: 0.6rem 1.3rem;
+            border-radius: 2rem;
+            font-weight: 500;
+            font-size: 0.85rem;
+            font-family: inherit;
+            color: #cbd5e6;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        button i {
+            font-style: normal;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        button:hover {
+            background: #2d4458;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        button.primary {
+            background: #0f6b6b;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 150, 136, 0.3);
+        }
+
+        button.primary:hover {
+            background: #1a8f8f;
+        }
+
+        button.warning {
+            background: #b45309;
+            color: #fff3e6;
+        }
+
+        button.warning:hover {
+            background: #c2410c;
+        }
+
+        /* editor area: double layout */
+        .editor-split {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 0;
+        }
+
+        .input-area, .output-area {
+            flex: 1;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            background: #0f1722;
+        }
+
+        .input-area {
+            border-right: 1px solid #1f2f3c;
+        }
+
+        .section-title {
+            padding: 0.8rem 1.5rem;
+            background: #111c26;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7f9cbb;
+            border-bottom: 1px solid #1e2c38;
+        }
+
+        textarea {
+            width: 100%;
+            background: #0b121c;
+            border: none;
+            color: #eef4ff;
+            font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            padding: 1.2rem;
+            resize: vertical;
+            outline: none;
+            transition: all 0.1s;
+            flex: 1;
+            min-height: 450px;
+        }
+
+        textarea:focus {
+            background: #0e1725;
+            box-shadow: inset 0 0 0 2px #2c6e9e;
+        }
+
+        .output-area pre {
+            margin: 0;
+            padding: 1.2rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #e2e8f0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #0b121c;
+            flex: 1;
+            min-height: 450px;
+            overflow: auto;
+        }
+
+        .error-message {
+            background: #2d1a1f;
+            border-top: 2px solid #f97316;
+            padding: 0.8rem 1.5rem;
+            color: #ffb4a2;
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .footer-meta {
+            padding: 0.9rem 2rem;
+            background: #0a141f;
+            font-size: 0.7rem;
+            text-align: center;
+            color: #5f7f9a;
+            border-top: 1px solid #1a2a36;
+        }
+
+        .copy-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #0f2c2c;
+            backdrop-filter: blur(12px);
+            color: #b9f3f0;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 999;
+            border: 1px solid #2dd4bf60;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 760px) {
+            body {
+                padding: 1rem;
+            }
+            .tool-header {
+                flex-direction: column;
+            }
+            .action-bar {
+                justify-content: center;
+            }
+            button {
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #07121c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2c5368;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="validator-container">
+    <div class="tool-header">
+        <div class="title-badge">
+            <h1>🪄 JSON Validator & Formatter</h1>
+            <p>Lint, beautify, and validate JSON with instant feedback</p>
+        </div>
+        <div class="status-panel" id="statusPanel">
+            <div class="status-led" id="statusLed"></div>
+            <span class="status-text" id="statusMsg">Waiting for input</span>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button id="formatBtn" class="primary">✨ Format & Validate</button>
+        <button id="validateBtn">🔍 Validate Only</button>
+        <button id="minifyBtn">⚡ Minify JSON</button>
+        <button id="clearBtn" class="warning">🗑️ Clear All</button>
+        <button id="copyOutputBtn">📋 Copy Output</button>
+        <button id="exampleBtn">📄 Load Example</button>
+    </div>
+
+    <div class="editor-split">
+        <!-- Input JSON area -->
+        <div class="input-area">
+            <div class="section-title">📝 INPUT JSON (raw / editable)</div>
+            <textarea id="jsonInput" placeholder='{ "name": "Tabassum", "tool": "JSON Wizard", "version": 1.0 }'></textarea>
+        </div>
+        <!-- Output / formatted area -->
+        <div class="output-area">
+            <div class="section-title">✨ FORMATTED OUTPUT & VALIDATION</div>
+            <pre id="jsonOutput">// Your formatted JSON will appear here<br>// Status: ready</pre>
+        </div>
+    </div>
+    <div id="errorBox" class="error-message" style="display: none;"></div>
+    <div class="footer-meta">
+        ⚡ JSON Validator & Formatter — Strict JSON5 compliance | Indentation: 2 spaces | Auto-syntax check
+    </div>
+</div>
+<div id="copyToast" class="copy-toast">📋 Copied to clipboard!</div>
+
+<script>
+    (function(){
+        // DOM elements
+        const textarea = document.getElementById('jsonInput');
+        const outputPre = document.getElementById('jsonOutput');
+        const statusLed = document.getElementById('statusLed');
+        const statusMsgSpan = document.getElementById('statusMsg');
+        const errorBoxDiv = document.getElementById('errorBox');
+        
+        // Buttons
+        const formatBtn = document.getElementById('formatBtn');
+        const validateBtn = document.getElementById('validateBtn');
+        const minifyBtn = document.getElementById('minifyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyOutputBtn = document.getElementById('copyOutputBtn');
+        const exampleBtn = document.getElementById('exampleBtn');
+
+        // Helper: update status UI (valid/invalid/neutral)
+        function updateStatusUI(isValid, errorMessage = null, customMsg = null) {
+            if (isValid === true) {
+                statusLed.className = "status-led valid";
+                statusMsgSpan.innerText = customMsg || "✅ Valid JSON";
+                if(errorBoxDiv.style.display !== 'none') errorBoxDiv.style.display = 'none';
+                errorBoxDiv.innerText = '';
+            } 
+            else if (isValid === false) {
+                statusLed.className = "status-led invalid";
+                let msg = customMsg || "❌ Invalid JSON";
+                statusMsgSpan.innerText = msg;
+                if(errorMessage) {
+                    errorBoxDiv.style.display = 'block';
+                    errorBoxDiv.innerText = `⚠️ Parse error: ${errorMessage}`;
+                } else {
+                    if(errorMessage === null && customMsg) {
+                        errorBoxDiv.style.display = 'block';
+                        errorBoxDiv.innerText = customMsg;
+                    } else if(errorMessage) {
+                        errorBoxDiv.style.display = 'block';
+                        errorBoxDiv.innerText = `⚠️ ${errorMessage}`;
+                    } else {
+                        errorBoxDiv.style.display = 'block';
+                        errorBoxDiv.innerText = `⚠️ Invalid JSON structure.`;
+                    }
+                }
+            } 
+            else {
+                // neutral state
+                statusLed.className = "status-led";
+                statusMsgSpan.innerText = customMsg || "⚪ Waiting for input";
+                errorBoxDiv.style.display = 'none';
+                errorBoxDiv.innerText = '';
+            }
+        }
+
+        // core: parse JSON safely, returns { success, data, errorMsg }
+        function parseJsonSafely(rawString) {
+            if (rawString.trim() === "") {
+                return { success: false, data: null, errorMsg: "Empty input — please provide JSON" };
+            }
+            try {
+                const parsed = JSON.parse(rawString);
+                return { success: true, data: parsed, errorMsg: null };
+            } catch (err) {
+                let friendlyMsg = err.message;
+                // enhance readability
+                if (err instanceof SyntaxError) {
+                    friendlyMsg = err.message.replace(/JSON\.parse:/, '').trim();
+                }
+                return { success: false, data: null, errorMsg: friendlyMsg };
+            }
+        }
+
+        // format json with pretty indent (2 spaces)
+        function formatJsonString(rawString) {
+            const parseResult = parseJsonSafely(rawString);
+            if (!parseResult.success) {
+                return { success: false, formatted: null, error: parseResult.errorMsg };
+            }
+            try {
+                const pretty = JSON.stringify(parseResult.data, null, 2);
+                return { success: true, formatted: pretty, error: null };
+            } catch (e) {
+                return { success: false, formatted: null, error: e.message };
+            }
+        }
+
+        // minify json (compact)
+        function minifyJsonString(rawString) {
+            const parseResult = parseJsonSafely(rawString);
+            if (!parseResult.success) {
+                return { success: false, minified: null, error: parseResult.errorMsg };
+            }
+            try {
+                const compact = JSON.stringify(parseResult.data);
+                return { success: true, minified: compact, error: null };
+            } catch (e) {
+                return { success: false, minified: null, error: e.message };
+            }
+        }
+
+        // validate only: updates UI based on current textarea value
+        function validateOnly() {
+            const raw = textarea.value;
+            if (raw.trim() === "") {
+                updateStatusUI(false, null, "⚠️ Empty input — provide JSON to validate");
+                outputPre.innerText = "// No JSON provided\n// Enter valid JSON and click 'Format & Validate'";
+                return false;
+            }
+            const parseResult = parseJsonSafely(raw);
+            if (parseResult.success) {
+                updateStatusUI(true, null, "✅ Valid JSON");
+                // optional: show pretty representation of parsed data for convenience
+                const prettyExisting = JSON.stringify(parseResult.data, null, 2);
+                outputPre.innerText = prettyExisting;
+                return true;
+            } else {
+                updateStatusUI(false, parseResult.errorMsg, "❌ Validation failed");
+                // preserve raw output but show error on pre?
+                outputPre.innerText = `// Invalid JSON\n// ${parseResult.errorMsg}\n// Please fix syntax errors.`;
+                return false;
+            }
+        }
+
+        // format action: format & update textarea (optional) + output area
+        function formatAndValidate() {
+            const raw = textarea.value;
+            if (raw.trim() === "") {
+                updateStatusUI(false, null, "⚠️ Nothing to format — input empty");
+                outputPre.innerText = "// Empty input\n// Paste or type JSON to format & validate";
+                return;
+            }
+            const formatRes = formatJsonString(raw);
+            if (formatRes.success) {
+                // update textarea with formatted version for better UX (optional but typical)
+                textarea.value = formatRes.formatted;
+                // update output area
+                outputPre.innerText = formatRes.formatted;
+                updateStatusUI(true, null, "✅ Valid & Formatted (2 spaces)");
+                // clear any residual error box
+                errorBoxDiv.style.display = 'none';
+            } else {
+                // format failed: show error
+                updateStatusUI(false, formatRes.error, "❌ Formatting failed — invalid JSON");
+                outputPre.innerText = `// Formatting error:\n// ${formatRes.error}\n// Original raw kept in editor.`;
+                // but keep textarea unchanged
+            }
+        }
+
+        // minify action: compress JSON and replace textarea content with minified version, update output
+        function minifyAction() {
+            const raw = textarea.value;
+            if (raw.trim() === "") {
+                updateStatusUI(false, null, "⚠️ Empty input — cannot minify");
+                outputPre.innerText = "// No data to minify";
+                return;
+            }
+            const minRes = minifyJsonString(raw);
+            if (minRes.success) {
+                // replace textarea with minified
+                textarea.value = minRes.minified;
+                outputPre.innerText = minRes.minified;
+                updateStatusUI(true, null, "✅ Minified (compact valid JSON)");
+            } else {
+                updateStatusUI(false, minRes.error, "❌ Minify failed — invalid JSON");
+                outputPre.innerText = `// Minify error:\n// ${minRes.error}`;
+            }
+        }
+
+        // clear everything: reset textarea, output, status, error
+        function clearAll() {
+            textarea.value = "";
+            outputPre.innerText = "// Cleared\n// Paste or type JSON to start";
+            updateStatusUI(null, null, "⚪ Ready — cleared");
+            errorBoxDiv.style.display = 'none';
+            errorBoxDiv.innerText = '';
+        }
+
+        // copy output content to clipboard with toast
+        async function copyOutput() {
+            const outputContent = outputPre.innerText;
+            if (!outputContent || outputContent.includes("// No JSON provided") || outputContent === "// Cleared\n// Paste or type JSON to start") {
+                // edge: but still allow copy if there's actual content
+                if (outputContent.trim() === "" || outputContent.includes("// Invalid JSON")) {
+                    showToast("⚠️ No valid output to copy", 1500);
+                    return;
+                }
+            }
+            try {
+                await navigator.clipboard.writeText(outputContent);
+                showToast("📋 Formatted JSON copied!", 1800);
+            } catch (err) {
+                showToast("❌ Copy failed", 1500);
+            }
+        }
+
+        // toast helper
+        let toastTimeout = null;
+        function showToast(msg, duration = 2000) {
+            const toast = document.getElementById('copyToast');
+            if(!toast) return;
+            toast.innerText = msg;
+            toast.style.opacity = '1';
+            if(toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.style.opacity = '0';
+            }, duration);
+        }
+
+        // load a rich example with nested structure
+        function loadExample() {
+            const example = {
+                "project": "JSON Wizard by Tabassum",
+                "version": "2.0.0",
+                "description": "Fully featured validator & formatter",
+                "features": ["Syntax highlight (mono)", "Format & minify", "Real-time validation"],
+                "author": {
+                    "name": "Tabassum",
+                    "role": "Senior Dev Tool Engineer",
+                    "languages": ["JavaScript", "HTML/CSS", "Python"]
+                },
+                "config": {
+                    "indent": 2,
+                    "strictMode": true,
+                    "theme": "dark oceanic"
+                },
+                "examples": [1, 2, 3, "valid", null],
+                "isActive": true
+            };
+            const prettyExample = JSON.stringify(example, null, 2);
+            textarea.value = prettyExample;
+            // format & validate automatically after load
+            const parseCheck = parseJsonSafely(prettyExample);
+            if(parseCheck.success) {
+                outputPre.innerText = prettyExample;
+                updateStatusUI(true, null, "✅ Loaded example (valid JSON)");
+            } else {
+                outputPre.innerText = "// Unexpected error loading example";
+                updateStatusUI(false, "Example parse error", "⚠️ Example corrupted");
+            }
+            errorBoxDiv.style.display = 'none';
+        }
+
+        // Event listeners for realtime optional: whenever user types, we could re-validate live? (optional UX)
+        // I'll add a "live validation" on input blur or on demand, but also realtime gentle indicator.
+        // For better experience: when user stops typing, we can do a silent validation (show status but not overwrite output)
+        let debounceTimer;
+        function liveValidationPreview() {
+            const raw = textarea.value;
+            if (raw.trim() === "") {
+                updateStatusUI(null, null, "⚡ Enter JSON to validate");
+                return;
+            }
+            const parseRes = parseJsonSafely(raw);
+            if (parseRes.success) {
+                updateStatusUI(true, null, "✅ Live: valid JSON");
+                // optional: but we don't replace output aggressively to keep user's editing undisturbed
+                // We'll not force output replace unless format is clicked.
+            } else {
+                updateStatusUI(false, parseRes.errorMsg, "❌ Syntax issue");
+            }
+        }
+        
+        // attach live typing feedback with debounce (non-intrusive, no output overwrite)
+        function attachLiveValidation() {
+            textarea.addEventListener('input', () => {
+                if (debounceTimer) clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    liveValidationPreview();
+                }, 400);
+            });
+            // also on blur for final check
+            textarea.addEventListener('blur', () => {
+                if (debounceTimer) clearTimeout(debounceTimer);
+                liveValidationPreview();
+            });
+        }
+
+        // initial page setup: example OR default gentle placeholder
+        function initializePage() {
+            // set default placeholder text with small valid json
+            const defaultDemo = `{
+  "service": "JSON Studio",
+  "status": "operational",
+  "endpoints": ["validate", "format", "minify"]
+}`;
+            textarea.value = defaultDemo;
+            const initParse = parseJsonSafely(defaultDemo);
+            if(initParse.success) {
+                outputPre.innerText = JSON.stringify(initParse.data, null, 2);
+                updateStatusUI(true, null, "✅ Ready — valid demo");
+            } else {
+                outputPre.innerText = "// Welcome to JSON tool";
+                updateStatusUI(null, null, "⚡ Ready — paste JSON");
+            }
+            errorBoxDiv.style.display = 'none';
+        }
+
+        // bind buttons
+        formatBtn.addEventListener('click', formatAndValidate);
+        validateBtn.addEventListener('click', validateOnly);
+        minifyBtn.addEventListener('click', minifyAction);
+        clearBtn.addEventListener('click', clearAll);
+        copyOutputBtn.addEventListener('click', copyOutput);
+        exampleBtn.addEventListener('click', loadExample);
+        
+        // optional shortcut: Ctrl+Enter / Cmd+Enter to format
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                formatAndValidate();
+            }
+            // Ctrl+Shift+M for minify
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'M') {
+                e.preventDefault();
+                minifyAction();
+            }
+        });
+        
+        // live validation listener attached
+        attachLiveValidation();
+        // init with nice default
+        initializePage();
+    })();
+</script>
+</body>
+</html>
